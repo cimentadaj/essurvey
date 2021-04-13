@@ -60,10 +60,32 @@ read_format_data <- function(dir_download, country = NULL, sddf = FALSE) {
                "sav" = read_foreign_spss_partial(sddf = sddf)
                )
       # Read with `foreign` (should never fail)
-      dt <-
-        suppress_all(
-          foreign_read(.x)
+      dt <- try(suppress_all(foreign_read(.x)), silent = TRUE)
+      
+      if ("try-error" %in% class(dt)) {
+        
+        # Ask for a user report
+        warning(
+          paste("Round",
+                rnd,
+                if (is.null(country)) "" else paste("for", country),
+                "could not be read with the `foreign` package. Perhaps",
+                "try with", paste0(
+                  "format = \"",
+                  if (file_ext(.x) == "dta") "spss" else "stata",
+                  "\""
+                ),
+                "instead?\n",
+                "Please report the issue at",
+                "https://github.com/ropensci/essurvey/issues"
+          ),
+          call. = FALSE
         )
+        
+        return(NULL)
+        
+      }
+        
     }
 
     # Always a return a tibble with lowercase variable names
